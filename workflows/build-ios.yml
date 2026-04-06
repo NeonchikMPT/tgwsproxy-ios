@@ -1,0 +1,123 @@
+name: Build TgWsProxy iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ios-app/**'
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Find iOS SDK
+        run: |
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          echo "SDK=$SDK" >> $GITHUB_ENV
+          echo "Using SDK: $SDK"
+          swift --version
+          xcodebuild -version
+
+      - name: Compile main app
+        working-directory: ios-app
+        run: |
+          set -euo pipefail
+          mkdir -p build/Payload/TgWsProxy.app
+
+          SOURCES=(
+            TgWsProxy/Sources/TgWsProxyApp.swift
+            TgWsProxy/Sources/ContentView.swift
+            TgWsProxy/Sources/SettingsView.swift
+            TgWsProxy/Sources/ProxyConfig.swift
+            TgWsProxy/Sources/ProxyManager.swift
+            TgWsProxy/Sources/Crypto.swift
+            TgWsProxy/Sources/RawWebSocket.swift
+            TgWsProxy/Sources/MTProtoHandshake.swift
+            TgWsProxy/Sources/MTProtoProxyServer.swift
+            TgWsProxy/Sources/LiveActivityManager.swift
+          )
+
+          echo "Compiling ${#SOURCES[@]} Swift files..."
+
+          swiftc \
+            -target arm64-apple-ios16.1 \
+            -sdk "$SDK" \
+            -O \
+            -whole-module-optimization \
+            -module-name TgWsProxy \
+            -emit-executable \
+            -o build/Payload/TgWsProxy.app/TgWsProxy \
+            -framework Foundation \
+            -framework SwiftUI \
+            -framework UIKit \
+            -framework Network \
+            -framework ActivityKit \
+            -framework WidgetKit \
+            "${SOURCES[@]}"
+
+          strip -x build/Payload/TgWsProxy.app/TgWsProxy
+          echo "Main app compiled successfully."
+
+      - name: Compile LiveActivity extension
+        working-directory: ios-app
+        run: |
+          set -euo pipefail
+          EXTENSION_DIR="build/Payload/TgWsProxy.app/PlugIns/TgWsProxyLiveActivity.appex"
+          mkdir -p "$EXTENSION_DIR"
+
+          # LiveActivity extension needs the shared attributes type from the main app
+          swiftc \
+            -target arm64-apple-ios16.1 \
+            -sdk "$SDK" \
+            -O \
+            -whole-module-optimization \
+            -module-name TgWsProxyLiveActivity \
+            -emit-executable \
+            -o "$EXTENSION_DIR/TgWsProxyLiveActivity" \
+            -framework Foundation \
+            -framework SwiftUI \
+            -framework WidgetKit \
+            -framework ActivityKit \
+            TgWsProxy/Sources/LiveActivityManager.swift \
+            TgWsProxy/LiveActivity/ProxyLiveActivity.swift
+
+          strip -x "$EXTENSION_DIR/TgWsProxyLiveActivity" 2>/dev/null || true
+
+          # Copy extension Info.plist
+          cp TgWsProxy/LiveActivity/Info.plist "$EXTENSION_DIR/Info.plist"
+          echo "LiveActivity extension compiled successfully."
+
+      - name: Assemble app bundle
+        working-directory: ios-app
+        run: |
+          set -euo pipefail
+          APP_DIR="build/Payload/TgWsProxy.app"
+
+          # Copy main app Info.plist & entitlements
+          cp TgWsProxy/Resources/Info.plist "$APP_DIR/Info.plist"
+          cp TgWsProxy/Resources/TgWsProxy.entitlements "$APP_DIR/TgWsProxy.entitlements"
+          echo -n "APPL????" > "$APP_DIR/PkgInfo"
+
+          echo "App bundle structure:"
+          find "$APP_DIR" -type f | sort
+
+      - name: Create IPA
+        working-directory: ios-app
+        run: |
+          set -euo pipefail
+          cd build
+          zip -r -q ../TgWsProxy-unsigned.ipa Payload/
+          echo "IPA size: $(du -h ../TgWsProxy-unsigned.ipa | cut -f1)"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: TgWsProxy-unsigned-ipa
+          path: ios-app/TgWsProxy-unsigned.ipa
