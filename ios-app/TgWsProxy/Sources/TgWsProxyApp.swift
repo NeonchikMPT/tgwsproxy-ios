@@ -4,6 +4,7 @@
 import SwiftUI
 
 @main
+@available(iOS 17.0, *)
 struct TgWsProxyApp: App {
     @StateObject private var proxyManager = ProxyManager.shared
 
