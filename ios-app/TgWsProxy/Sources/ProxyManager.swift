@@ -35,9 +35,18 @@ class ProxyManager: ObservableObject {
 
         logger.info("Starting proxy on \(self.config.host):\(self.config.port)")
 
+        // ЗАПУСК LIVE ACTIVITY!
+        LiveActivityManager.shared.startActivity(host: config.host, port: config.port)
+
         server = MTProtoProxyServer(config: config, statsCallback: { [weak self] newStats in
             Task { @MainActor in
                 self?.stats = newStats
+                // ОБНОВЛЕНИЕ LIVE ACTIVITY СО СТАТИСТИКОЙ
+                LiveActivityManager.shared.updateActivity(
+                    connections: newStats.connectionsActive,
+                    bytesUp: newStats.bytesUp,
+                    bytesDown: newStats.bytesDown
+                )
             }
         })
 
@@ -49,6 +58,8 @@ class ProxyManager: ObservableObject {
             } catch {
                 logger.error("Failed to start proxy: \(error)")
                 isRunning = false
+                // ОСТАНОВКА LIVE ACTIVITY ПРИ ОШИБКЕ
+                LiveActivityManager.shared.stopActivity()
             }
         }
     }
@@ -56,6 +67,10 @@ class ProxyManager: ObservableObject {
     func stopProxy() {
         guard isRunning else { return }
         logger.info("Stopping proxy")
+        
+        // ОСТАНОВКА LIVE ACTIVITY!
+        LiveActivityManager.shared.stopActivity()
+        
         server?.stop()
         server = nil
         isRunning = false
