@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(iOS 17.0, *)
 struct SettingsView: View {
     @EnvironmentObject var proxy: ProxyManager
     @Environment(\.dismiss) private var dismiss
