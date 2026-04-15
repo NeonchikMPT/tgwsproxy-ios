@@ -16,6 +16,7 @@ struct ProxyStats {
 }
 
 @MainActor
+@available(iOS 17.0, *)
 class ProxyManager: ObservableObject {
     static let shared = ProxyManager()
 
