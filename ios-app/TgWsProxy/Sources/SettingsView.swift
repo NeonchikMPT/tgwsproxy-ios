@@ -114,7 +114,7 @@ struct SettingsView: View {
             showError = "Порт должен быть числом 1-65535"
             return
         }
-        guard secret.count == 32, (try? UInt64(secret.prefix(16), radix: 16)) != nil else {
+        guard secret.count == 32, UInt64(secret.prefix(16), radix: 16) != nil else {
             showError = "Secret должен быть 32 hex-символа"
             return
         }
