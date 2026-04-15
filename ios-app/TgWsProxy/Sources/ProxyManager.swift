@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import os.log
+import CoreLocation
 
 private let logger = Logger(subsystem: "com.tgwsproxy.app", category: "ProxyManager")
 
