@@ -18,6 +18,7 @@ struct ProxyActivityAttributes: ActivityAttributes {
 // MARK: - Live Activity Manager
 
 @MainActor
+@available(iOS 16.2, *)
 class LiveActivityManager: ObservableObject {
     static let shared = LiveActivityManager()
 
