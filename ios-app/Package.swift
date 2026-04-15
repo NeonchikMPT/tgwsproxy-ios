@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "TgWsProxy",
     platforms: [
-        .iOS(.v16)
+        .iOS(.v16_2)
     ],
     products: [
         .executable(name: "TgWsProxy", targets: ["TgWsProxy"]),
