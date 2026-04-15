@@ -5,6 +5,40 @@ import CoreLocation
 
 private let logger = Logger(subsystem: "com.tgwsproxy.app", category: "ProxyManager")
 
+// MARK: - Location Manager (встроенный)
+@available(iOS 17.0, *)
+@MainActor
+final class LocationManager: NSObject, CLLocationManagerDelegate {
+    static let shared = LocationManager()
+    private let manager = CLLocationManager()
+    
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
+    }
+    
+    func start() {
+        manager.requestAlwaysAuthorization()
+        manager.startUpdatingLocation()
+    }
+    
+    func stop() {
+        manager.stopUpdatingLocation()
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        // Ничего не делаем — просто держим приложение в фоне
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location error: \(error)")
+    }
+}
+
+// MARK: - Proxy Stats
 struct ProxyStats {
     var connectionsTotal: Int = 0
     var connectionsActive: Int = 0
@@ -16,6 +50,7 @@ struct ProxyStats {
     var bytesDown: UInt64 = 0
 }
 
+// MARK: - Proxy Manager
 @MainActor
 @available(iOS 17.0, *)
 class ProxyManager: ObservableObject {
