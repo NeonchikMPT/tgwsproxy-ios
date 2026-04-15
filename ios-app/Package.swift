@@ -19,6 +19,7 @@ let package = Package(
                 .linkedFramework("Network"),
                 .linkedFramework("ActivityKit"),
                 .linkedFramework("WidgetKit"),
+                .linkedFramework("CoreLocation"),  // <-- ДОБАВИТЬ
             ]
         ),
     ]
