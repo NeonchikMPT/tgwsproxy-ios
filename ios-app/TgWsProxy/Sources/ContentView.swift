@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(iOS 17.0, *)
 struct ContentView: View {
     @EnvironmentObject var proxy: ProxyManager
     @State private var showSettings = false
