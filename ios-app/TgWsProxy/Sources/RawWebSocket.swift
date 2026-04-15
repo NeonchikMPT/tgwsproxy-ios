@@ -41,7 +41,7 @@ actor RawWebSocket {
     private func performConnect(ip: String, domain: String, path: String,
                                 timeout: TimeInterval) async throws {
         let tlsOptions = NWProtocolTLS.Options()
-        sec_protocol_options_set_peer_domain(tlsOptions.securityProtocolOptions, domain)
+        // sec_protocol_options_set_peer_domain(tlsOptions.securityProtocolOptions, domain)
         // Allow self-signed / mismatched for Telegram's WS endpoints
         sec_protocol_options_set_verify_block(tlsOptions.securityProtocolOptions, { _, _, completionHandler in
             completionHandler(true)
