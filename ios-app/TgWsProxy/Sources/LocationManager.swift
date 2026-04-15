@@ -3,8 +3,8 @@ import CoreLocation
 
 @available(iOS 17.0, *)
 @MainActor
-final class LocationManager: NSObject, CLLocationManagerDelegate {
-    static let shared = LocationManager()
+public final class LocationManager: NSObject, CLLocationManagerDelegate {
+    public static let shared = LocationManager()
     
     private let manager = CLLocationManager()
     
